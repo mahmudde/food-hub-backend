@@ -1,6 +1,13 @@
 import { prisma } from "../../lib/prisma";
 
 const createProviderProfile = async (payload: any) => {
+  const isExist = await prisma.providerProfile.findUnique({
+    where: { user_id: payload.user_id },
+  });
+
+  if (isExist) {
+    throw new Error("Already you have a profile");
+  }
   const result = await prisma.providerProfile.create({
     data: payload,
   });

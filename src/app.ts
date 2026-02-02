@@ -6,6 +6,7 @@ import { MealRoutes } from "./modules/meal/meal.route";
 import { ProviderRoutes } from "./modules/provider/provider.route";
 import { auth } from "./lib/auth";
 import { toNodeHandler } from "better-auth/node";
+import { CategoryRoutes } from "./modules/category/category.route";
 
 const app: Application = express();
 
@@ -25,5 +26,6 @@ app.get("/", (req, res) => {
 app.use("/api/v1/auth", UserRoutes);
 app.use("/api/v1/meals", MealRoutes);
 app.use("/api/v1/providers", ProviderRoutes);
+app.use("/api/v1/categories", CategoryRoutes);
 
 export default app;
