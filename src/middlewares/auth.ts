@@ -1,11 +1,10 @@
 import { Request, Response, NextFunction } from "express";
 import { UserRole } from "@prisma/client";
-import { prisma } from "../lib/prisma"; // আপনার প্রিজমা পাথ অনুযায়ী ঠিক করুন
+import { prisma } from "../lib/prisma";
 
 const auth = (...roles: UserRole[]) => {
   return async (req: Request, res: Response, next: NextFunction) => {
     try {
-      // ১. কুকি রিড করার সঠিক পদ্ধতি (Express way)
       const rawCookie = req.headers.cookie;
 
       if (!rawCookie) {
@@ -18,12 +17,11 @@ const auth = (...roles: UserRole[]) => {
         .split("; ")
         .find((row: string) =>
           row.trim().startsWith("better-auth.session_token="),
-        ) // row: string দিয়ে টাইপ দিন
+        )
         ?.split("=")[1];
 
       const token = decodeURIComponent(rawToken || "");
 
-      // ২. ডাটাবেস চেক
       const sessionWithUser = await prisma.session.findUnique({
         where: { token: token },
         include: { user: true },
@@ -35,7 +33,6 @@ const auth = (...roles: UserRole[]) => {
           .json({ success: false, message: "Unauthorized" });
       }
 
-      // ৩. রোল ভ্যালিডেশন
       if (
         roles.length &&
         !roles.includes(sessionWithUser.user.role as UserRole)
@@ -43,7 +40,6 @@ const auth = (...roles: UserRole[]) => {
         return res.status(403).json({ success: false, message: "Forbidden" });
       }
 
-      // ৪. ইউজার সেট করা (এরর হ্যান্ডেল করতে টাইপ কাস্টিং)
       (req as any).user = {
         id: sessionWithUser.user.id,
         email: sessionWithUser.user.email,
