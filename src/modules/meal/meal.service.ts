@@ -9,42 +9,75 @@ const createMeal = async (payload: Meal) => {
 };
 
 const getAllMeal = async (query: any) => {
-  const { searchTerm, category, minPrice, maxPrice, sortBy, sortOrder } = query;
-  const conditions: any = [];
+  const {
+    searchTerm,
+    category,
+    minPrice,
+    maxPrice,
+    sortBy,
+    sortOrder,
+    page = 1,
+    limit = 10,
+  } = query;
+
+  // Pagination calculation
+  const skip = (Number(page) - 1) * Number(limit);
+  const take = Number(limit);
+
+  // Search and Filter conditions
+  const conditions: any = {};
+
   if (searchTerm) {
     conditions.OR = [
-      { name: { constains: searchTerm, mode: "insensitive" } },
-      { description: { constains: searchTerm, mode: "insensitive" } },
+      { name: { contains: searchTerm, mode: "insensitive" } },
+      { description: { contains: searchTerm, mode: "insensitive" } },
     ];
   }
+
   if (category) {
     conditions.category = {
-      name: { constains: category, mode: "insensitive" },
+      name: { contains: category, mode: "insensitive" },
     };
   }
+
   if (minPrice || maxPrice) {
     conditions.price = {
       gte: minPrice ? Number(minPrice) : 0,
       lte: maxPrice ? Number(maxPrice) : 1000000,
     };
   }
-  const result = await prisma.meal.findMany({
-    where: conditions,
-    include: {
-      category: true,
-      provider: true,
-    },
-    orderBy: sortBy ? { [sortBy]: sortOrder || "asc" } : { created_at: "desc" },
-  });
 
-  return result;
+  // Fetching data and total count for meta
+  const [result, total] = await Promise.all([
+    prisma.meal.findMany({
+      where: conditions,
+      skip,
+      take,
+      include: {
+        category: true,
+        provider: true,
+      },
+      orderBy: sortBy
+        ? { [sortBy]: sortOrder || "asc" }
+        : { created_at: "desc" },
+    }),
+    prisma.meal.count({ where: conditions }),
+  ]);
+
+  return {
+    meta: {
+      page: Number(page),
+      limit: take,
+      total,
+      totalPage: Math.ceil(total / take),
+    },
+    data: result,
+  };
 };
 
 const getSingleMeal = async (id: string) => {
   const result = await prisma.meal.findUnique({
-    where: {
-      id,
-    },
+    where: { id },
     include: {
       category: true,
       provider: true,
@@ -55,9 +88,7 @@ const getSingleMeal = async (id: string) => {
 
 const updateMeal = async (id: string, payload: Partial<Meal>) => {
   const result = await prisma.meal.update({
-    where: {
-      id,
-    },
+    where: { id },
     data: payload,
   });
   return result;

@@ -6,7 +6,7 @@ const createMeal = async (req: Request, res: Response) => {
     const result = await MealService.createMeal(req.body);
     res.status(201).json({
       success: true,
-      message: " Meal created successfully",
+      message: "Meal created successfully",
       data: result,
     });
   } catch (error: any) {
@@ -19,11 +19,13 @@ const createMeal = async (req: Request, res: Response) => {
 
 const getAllMeal = async (req: Request, res: Response) => {
   try {
+    // সার্ভিস থেকে এখন meta এবং data আলাদাভাবে আসছে
     const result = await MealService.getAllMeal(req.query);
     res.status(200).json({
       success: true,
-      message: "Meals retrived successfully",
-      data: result,
+      message: "Meals retrieved successfully",
+      meta: result.meta, // পেজিনেশন ডেটা
+      data: result.data, // খাবারের লিস্ট
     });
   } catch (error: any) {
     res.status(500).json({
@@ -39,7 +41,7 @@ const getSingleMeal = async (req: Request, res: Response) => {
     const result = await MealService.getSingleMeal(id as string);
     res.status(200).json({
       success: true,
-      message: "Meal retrive successfully",
+      message: "Meal retrieved successfully",
       data: result,
     });
   } catch (error: any) {
@@ -53,14 +55,18 @@ const getSingleMeal = async (req: Request, res: Response) => {
 const updateMeal = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const user = req.user;
+    const user = (req as any).user; // Type checking এর জন্য cast করা ভালো
+
     const meal = await MealService.getSingleMeal(id as string);
+
+    // নিজের ডেটা কি না চেক করা এবং চেক শেষে return দেওয়া জরুরি
     if (!meal || meal.provider_id !== user?.id) {
-      res.status(403).json({
+      return res.status(403).json({
         success: false,
-        message: "You can only update your data",
+        message: "You can only update your own meals",
       });
     }
+
     const result = await MealService.updateMeal(id as string, req.body);
     res.status(200).json({
       success: true,
@@ -76,21 +82,31 @@ const updateMeal = async (req: Request, res: Response) => {
 };
 
 const deleteMeal = async (req: Request, res: Response) => {
-  const { id } = req.params;
-  const user = req.user;
-  const meal = await MealService.getSingleMeal(id as string);
-  if (!meal || meal.provider_id !== user?.id) {
-    res.status(403).json({
+  try {
+    const { id } = req.params;
+    const user = (req as any).user;
+
+    const meal = await MealService.getSingleMeal(id as string);
+
+    if (!meal || meal.provider_id !== user?.id) {
+      return res.status(403).json({
+        success: false,
+        message: "You can only delete your own meals",
+      });
+    }
+
+    const result = await MealService.deleteMeal(id as string);
+    res.status(200).json({
+      success: true,
+      message: "Meal deleted successfully",
+      data: result,
+    });
+  } catch (error: any) {
+    res.status(500).json({
       success: false,
-      message: "You can dele only your own data",
+      message: error.message,
     });
   }
-  const result = await MealService.deleteMeal(id as string);
-  res.status(200).json({
-    success: true,
-    message: "Meal deleted successfully",
-    data: result,
-  });
 };
 
 export const MealController = {
