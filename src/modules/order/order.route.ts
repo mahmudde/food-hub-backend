@@ -17,4 +17,10 @@ router.get("/my-orders", auth(UserRole.CUSTOMER), OrderController.getMyOrders);
 
 router.post("/", auth(UserRole.CUSTOMER), OrderController.createOrder);
 
+router.get(
+  "/track/:id",
+  auth(UserRole.CUSTOMER, UserRole.ADMIN),
+  OrderController.trackOrder,
+);
+
 export const OrderRoutes = router;

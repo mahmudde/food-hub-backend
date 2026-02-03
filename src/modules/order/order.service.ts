@@ -86,6 +86,30 @@ const deleteOrder = async (orderId: string) => {
   });
 };
 
+const trackOrder = async (orderId: string) => {
+  const result = await prisma.order.findUnique({
+    where: { id: orderId },
+    include: {
+      provider: {
+        select: {
+          resturant_name: true,
+        },
+      },
+      items: {
+        include: {
+          meal: true,
+        },
+      },
+    },
+  });
+
+  if (!result) {
+    throw new Error("No order found");
+  }
+
+  return result;
+};
+
 export const OrderService = {
   createOrder,
   getAllOrders,
@@ -93,4 +117,5 @@ export const OrderService = {
   getDashboardStats,
   updateOrderStatus,
   deleteOrder,
+  trackOrder,
 };

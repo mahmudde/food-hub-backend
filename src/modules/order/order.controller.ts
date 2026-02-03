@@ -43,9 +43,28 @@ const getMyOrders = async (req: Request, res: Response) => {
   }
 };
 
+const trackOrder = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const result = await OrderService.trackOrder(id as string);
+
+    res.status(200).json({
+      success: true,
+      message: "Order tracking information retrieved successfully",
+      data: result,
+    });
+  } catch (error: any) {
+    res.status(404).json({
+      success: false,
+      message: error.message || "Order not found",
+    });
+  }
+};
+
 export const OrderController = {
   createOrder,
   getAllOrders,
   getDashboardStats,
   getMyOrders,
+  trackOrder,
 };
