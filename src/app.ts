@@ -13,6 +13,7 @@ import { AddressRoutes } from "./modules/address/address.route";
 import { OrderItemRoutes } from "./modules/orderItem/orderItem.route";
 import { ReviewRoutes } from "./modules/review/review.route";
 import { auth } from "./lib/auth";
+import globalErrorHandler from "./middlewares/globalErrorHandler";
 
 const app: Application = express();
 
@@ -43,4 +44,6 @@ app.use("/api/v1/orders", OrderRoutes);
 app.use("/api/v1/addresses", AddressRoutes);
 app.use("/api/v1/order-items", OrderItemRoutes);
 app.use("/api/v1/reviews", ReviewRoutes);
+app.use(globalErrorHandler);
+
 export default app;
