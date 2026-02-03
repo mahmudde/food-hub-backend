@@ -5,26 +5,16 @@ import { UserRole } from "@prisma/client";
 
 const router = express.Router();
 
-// --- Customer Routes ---
-
-router.post(
-  "/place-order",
-  auth(UserRole.CUSTOMER),
-  OrderController.createOrder,
+router.get(
+  "/dashboard-stats",
+  auth(UserRole.ADMIN, UserRole.PROVIDER),
+  OrderController.getDashboardStats,
 );
+
+router.get("/all-orders", auth(UserRole.ADMIN), OrderController.getAllOrders);
 
 router.get("/my-orders", auth(UserRole.CUSTOMER), OrderController.getMyOrders);
 
-// --- Provider & Admin Routes ---
-
-router.patch(
-  "/:id/status",
-  auth(UserRole.PROVIDER, UserRole.ADMIN),
-  OrderController.updateOrderStatus,
-);
-
-// --- Admin Only Routes ---
-
-router.delete("/:id", auth(UserRole.ADMIN), OrderController.deleteOrder);
+router.post("/", auth(UserRole.CUSTOMER), OrderController.createOrder);
 
 export const OrderRoutes = router;

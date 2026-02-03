@@ -5,12 +5,29 @@ const createOrder = async (req: Request, res: Response) => {
   try {
     const user = (req as any).user;
     const result = await OrderService.createOrder(user.id, req.body);
-
     res.status(201).json({
       success: true,
-      message: "Order hasbeen created successfully",
+      message: "Order placed successfully",
       data: result,
     });
+  } catch (error: any) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+const getAllOrders = async (req: Request, res: Response) => {
+  try {
+    const result = await OrderService.getAllOrders(req.query);
+    res.status(200).json({ success: true, data: result });
+  } catch (error: any) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+const getDashboardStats = async (req: Request, res: Response) => {
+  try {
+    const result = await OrderService.getDashboardStats();
+    res.status(200).json({ success: true, data: result });
   } catch (error: any) {
     res.status(500).json({ success: false, message: error.message });
   }
@@ -20,46 +37,7 @@ const getMyOrders = async (req: Request, res: Response) => {
   try {
     const user = (req as any).user;
     const result = await OrderService.getMyOrders(user.id);
-
-    res.status(200).json({
-      success: true,
-      message: "Your orders retrived successfully",
-      count: result.length,
-      data: result,
-    });
-  } catch (error: any) {
-    res.status(500).json({
-      success: false,
-      message: error.message,
-    });
-  }
-};
-
-const updateOrderStatus = async (req: Request, res: Response) => {
-  try {
-    const { id } = req.params;
-    const { status } = req.body;
-    const result = await OrderService.updateOrderStatus(id as string, status);
-
-    res.status(200).json({
-      success: true,
-      message: "Order status has benn updated",
-      data: result,
-    });
-  } catch (error: any) {
-    res.status(500).json({ success: false, message: error.message });
-  }
-};
-
-const deleteOrder = async (req: Request, res: Response) => {
-  try {
-    const { id } = req.params;
-    await OrderService.deleteOrder(id as string);
-
-    res.status(200).json({
-      success: true,
-      message: "Order has been deleted",
-    });
+    res.status(200).json({ success: true, data: result });
   } catch (error: any) {
     res.status(500).json({ success: false, message: error.message });
   }
@@ -67,7 +45,7 @@ const deleteOrder = async (req: Request, res: Response) => {
 
 export const OrderController = {
   createOrder,
+  getAllOrders,
+  getDashboardStats,
   getMyOrders,
-  updateOrderStatus,
-  deleteOrder,
 };
