@@ -6,12 +6,15 @@ const createOrder = async (userId: string, payload: any) => {
   const result = await prisma.$transaction(async (tx) => {
     const order = await tx.order.create({
       data: {
-        customer_id: userId,
-        provider_id,
+        customer: {
+          connect: { id: userId },
+        },
+        provider: {
+          connect: { id: provider_id },
+        },
         delivery_address,
         total_price,
         status: "PLACED",
-
         items: {
           create: items.map((item: any) => ({
             meal_id: item.meal_id,
@@ -27,8 +30,6 @@ const createOrder = async (userId: string, payload: any) => {
 
     return order;
   });
-
-  return result;
 };
 
 const getMyOrders = async (userId: string) => {
