@@ -14,6 +14,7 @@ import { OrderItemRoutes } from "./modules/orderItem/orderItem.route";
 import { ReviewRoutes } from "./modules/review/review.route";
 import { auth } from "./lib/auth";
 import globalErrorHandler from "./middlewares/globalErrorHandler";
+import notFound from "./middlewares/notFound";
 
 const app: Application = express();
 
@@ -45,5 +46,6 @@ app.use("/api/v1/addresses", AddressRoutes);
 app.use("/api/v1/order-items", OrderItemRoutes);
 app.use("/api/v1/reviews", ReviewRoutes);
 app.use(globalErrorHandler);
+app.use(notFound);
 
 export default app;
