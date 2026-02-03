@@ -15,4 +15,32 @@ const getMyAddresses = async (userId: string) => {
   });
 };
 
-export const AddressService = { createAddress, getMyAddresses };
+const updateAddress = async (
+  addressId: string,
+  userId: string,
+  payload: any,
+) => {
+  return await prisma.address.update({
+    where: {
+      id: addressId,
+      user_id: userId,
+    },
+    data: payload,
+  });
+};
+
+const deleteAddress = async (addressId: string, userId: string) => {
+  return await prisma.address.delete({
+    where: {
+      id: addressId,
+      user_id: userId,
+    },
+  });
+};
+
+export const AddressService = {
+  createAddress,
+  getMyAddresses,
+  updateAddress,
+  deleteAddress,
+};

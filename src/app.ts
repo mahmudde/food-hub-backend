@@ -8,6 +8,7 @@ import { auth } from "./lib/auth";
 import { toNodeHandler } from "better-auth/node";
 import { CategoryRoutes } from "./modules/category/category.route";
 import { OrderRoutes } from "./modules/order/order.route";
+import { AddressRoutes } from "./modules/address/address.route";
 
 const app: Application = express();
 
@@ -29,5 +30,6 @@ app.use("/api/v1/meals", MealRoutes);
 app.use("/api/v1/providers", ProviderRoutes);
 app.use("/api/v1/categories", CategoryRoutes);
 app.use("/api/v1/orders", OrderRoutes);
+app.use("/api/v1/addresses", AddressRoutes);
 
 export default app;
