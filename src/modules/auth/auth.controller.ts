@@ -35,23 +35,6 @@ const login = async (req: Request, res: Response) => {
   }
 };
 
-// const getMe = async (req: Request, res: Response) => {
-//   try {
-//     const result = await AuthService.getMe(req.headers);
-
-//     res.status(200).json({
-//       success: true,
-//       message: "Profile data retrieved successfully",
-//       data: result,
-//     });
-//   } catch (error: any) {
-//     res.status(401).json({
-//       success: false,
-//       message: error.message || "Unauthorized",
-//     });
-//   }
-// };
-
 const getMe = async (req: Request, res: Response) => {
   try {
     const result = await AuthService.getMe(req.headers);
@@ -67,8 +50,29 @@ const getMe = async (req: Request, res: Response) => {
   }
 };
 
+const handleProfileUpdate = async (req: Request, res: Response) => {
+  try {
+    const userId = (req as any).user?.id;
+    const updateData = req.body;
+
+    const result = await AuthService.updateFullProfile(userId, updateData);
+
+    res.status(200).json({
+      success: true,
+      message: "Profile and Provider settings updated successfully!",
+      data: result,
+    });
+  } catch (error: any) {
+    res.status(400).json({
+      success: false,
+      message: error.message || "Something went wrong",
+    });
+  }
+};
+
 export const AuthController = {
   signUp,
   login,
   getMe,
+  handleProfileUpdate,
 };

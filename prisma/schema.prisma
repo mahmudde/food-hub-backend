@@ -41,6 +41,8 @@ model ProviderProfile {
   resturant_name String
   description    String
   is_open        ProviderStatus @default(OPEN)
+  address_id     String?        @unique 
+  address        Address?       @relation(fields: [address_id], references: [id])
   user_id        String         @unique
   user           User           @relation(fields: [user_id], references: [id], onDelete: Cascade)
   createdAt      DateTime       @default(now())
@@ -134,6 +136,7 @@ model Address {
   phone        String
   createdAt    DateTime @default(now())
   orders       Order[]
+  provider_profile ProviderProfile?
 
   @@map("address")
 }
