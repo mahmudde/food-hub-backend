@@ -46,7 +46,7 @@
   //   "esModuleInterop": true
   // },
   "compilerOptions": {
-    "target": "ES2023",
+    "target": "ES2022",
     "module": "CommonJS",
     "moduleResolution": "node",
     "outDir": "./dist",
