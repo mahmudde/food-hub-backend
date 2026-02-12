@@ -3,7 +3,6 @@ import { prisma } from "./prisma";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import nodemailer from "nodemailer";
 
-// Create a transporter using SMTP
 const transporter = nodemailer.createTransport({
   host: "smtp.gmail.com",
   port: 587,
@@ -18,15 +17,23 @@ export const auth = betterAuth({
   database: prismaAdapter(prisma, {
     provider: "postgresql",
   }),
-  baseURL: "http://localhost:5000",
+  baseURL: process.env.APP_URL || "http://localhost:3000",
   basePath: "/api/v1/auth",
-
+  socialProviders: {
+    google: {
+      clientId: process.env.GOOGLE_CLIENT_ID!,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+      redirectURI: "http://localhost:5000/api/v1/auth/callback/google",
+    },
+  },
   advanced: {
     useSecureCookies: false,
+    crossOrigin: true,
   },
 
   session: {
     expiresIn: 60 * 60 * 24 * 7,
+    updateAge: 60 * 60 * 24,
     strategy: "database",
   },
 
@@ -37,6 +44,7 @@ export const auth = betterAuth({
       role: {
         type: "string",
         defaultValue: "CUSTOMER",
+        input: false,
       },
       status: {
         type: "string",
@@ -46,7 +54,7 @@ export const auth = betterAuth({
   },
   emailAndPassword: {
     enabled: true,
-    autoSignIn: false,
+    autoSignIn: true,
     requireEmailVerification: true,
   },
   emailVerification: {
@@ -116,14 +124,6 @@ export const auth = betterAuth({
         console.error("Email verification error:", err);
         throw err;
       }
-    },
-  },
-  socialProviders: {
-    google: {
-      prompt: "select_account consent",
-      accessType: "offline",
-      clientId: process.env.GOOGLE_CLIENT_ID as string,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET as string,
     },
   },
 });

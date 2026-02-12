@@ -1,9 +1,25 @@
 import { Meal } from "@prisma/client";
 import { prisma } from "../../lib/prisma";
 
-const createMeal = async (payload: Meal) => {
+const createMeal = async (userId: string, payload: any) => {
+  const provider = await prisma.providerProfile.findUnique({
+    where: { user_id: userId },
+  });
+
+  if (!provider) {
+    throw new Error("You must have a provider profile to add meals!");
+  }
+
   const result = await prisma.meal.create({
-    data: payload,
+    data: {
+      name: payload.name,
+      description: payload.description,
+      price: Number(payload.price),
+      image_url: payload.image_url || "https://example.com/default.jpg",
+      is_available: "AVAILABLE",
+      category_id: payload.category_id,
+      provider_id: provider.id,
+    },
   });
   return result;
 };
@@ -87,10 +103,19 @@ const getSingleMeal = async (id: string) => {
 };
 
 const updateMeal = async (id: string, payload: Partial<Meal>) => {
+  const { id: _, ...updateData } = payload as any;
+
+  if (updateData.price) {
+    updateData.price = Number(updateData.price);
+  }
+
   const result = await prisma.meal.update({
-    where: { id },
-    data: payload,
+    where: {
+      id: id,
+    },
+    data: updateData,
   });
+
   return result;
 };
 

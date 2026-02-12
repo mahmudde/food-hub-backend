@@ -11,16 +11,38 @@ router.get(
   OrderController.getDashboardStats,
 );
 
-router.get("/all-orders", auth(UserRole.ADMIN), OrderController.getAllOrders);
+router.get(
+  "/provider-orders",
+  auth(UserRole.PROVIDER),
+  OrderController.getProviderOrders,
+);
+
+router.patch(
+  "/status/:id",
+  auth(UserRole.PROVIDER),
+  OrderController.updateStatus,
+);
 
 router.get("/my-orders", auth(UserRole.CUSTOMER), OrderController.getMyOrders);
 
 router.post("/", auth(UserRole.CUSTOMER), OrderController.createOrder);
 
+router.patch(
+  "/cancel/:id",
+  auth(UserRole.CUSTOMER),
+  OrderController.cancelOrder,
+);
+
 router.get(
   "/track/:id",
-  auth(UserRole.CUSTOMER, UserRole.ADMIN),
+  auth(UserRole.CUSTOMER, UserRole.ADMIN, UserRole.PROVIDER),
   OrderController.trackOrder,
+);
+
+router.get(
+  "/all-orders",
+  auth(UserRole.PROVIDER),
+  OrderController.getAllOrders,
 );
 
 export const OrderRoutes = router;

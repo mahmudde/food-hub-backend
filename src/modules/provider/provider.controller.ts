@@ -21,6 +21,26 @@ const createProviderProfile = async (req: Request, res: Response) => {
     });
   }
 };
+const getProviderProfile = async (req: Request, res: Response) => {
+  const userId = (req.user as any)?.id || (req.user as any)?.userId;
+
+  const result = await ProviderService.getProviderProfile(userId);
+
+  if (!result) {
+    return res.status(404).json({
+      success: false,
+      message: "Provider profile not found!",
+      data: null,
+    });
+  }
+
+  res.status(200).json({
+    success: true,
+    message: "Provider profile fetched successfully!",
+    data: result,
+  });
+};
 export const ProviderController = {
   createProviderProfile,
+  getProviderProfile,
 };

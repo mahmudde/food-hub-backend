@@ -5,9 +5,10 @@ import { prisma } from "../../lib/prisma";
 const signUpUser = async (userData: any) => {
   const result = await auth.api.signUpEmail({
     body: {
+      name: userData.name,
       email: userData.email,
       password: userData.password,
-      name: userData.name,
+      // @ts-ignore
       role: userData.role || "CUSTOMER",
     },
   });
@@ -40,6 +41,9 @@ const getMe = async (reqHeaders: any) => {
 
 const updateFullProfile = async (userId: string, data: any) => {
   return await prisma.$transaction(async (tx) => {
+    if (!userId) {
+      throw new Error("User ID is required for profile update");
+    }
     const updatedUser = await tx.user.update({
       where: { id: userId },
       data: {
@@ -91,9 +95,60 @@ const updateFullProfile = async (userId: string, data: any) => {
     return updatedUser;
   });
 };
+
+const becomeProvider = async (userId: string) => {
+  const updatedUser = await prisma.user.update({
+    where: { id: userId },
+    data: {
+      role: "PROVIDER",
+    },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      role: true,
+    },
+  });
+
+  return updatedUser;
+};
+
+const getAllUsers = async () => {
+  return await prisma.user.findMany({
+    orderBy: {
+      createdAt: "desc",
+    },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      role: true,
+      image: true,
+      createdAt: true,
+    },
+  });
+};
+
+const changeUserRole = async (userId: string, newRole: UserRole) => {
+  return await prisma.user.update({
+    where: { id: userId },
+    data: { role: newRole },
+  });
+};
+
+const deleteUser = async (userId: string) => {
+  return await prisma.user.delete({
+    where: { id: userId },
+  });
+};
+
 export const AuthService = {
   signUpUser,
   loginUser,
   getMe,
   updateFullProfile,
+  becomeProvider,
+  getAllUsers,
+  changeUserRole,
+  deleteUser,
 };

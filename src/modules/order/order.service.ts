@@ -1,30 +1,35 @@
 import { prisma } from "../../lib/prisma";
 
 const createOrder = async (userId: string, payload: any) => {
-  const { provider_id, items, delivery_address, total_price } = payload;
+  const { provider_id, items, delivery_address, total_price, payment_method } =
+    payload;
 
-  if (!items || !Array.isArray(items)) {
-    throw new Error("Order item not found");
+  if (!items || !Array.isArray(items) || items.length === 0) {
+    throw new Error("Order items are missing or invalid");
   }
 
   return await prisma.$transaction(async (tx) => {
     const order = await tx.order.create({
       data: {
-        customer: { connect: { id: userId } },
-        provider: { connect: { id: provider_id } },
-        delivery_address,
-        total_price,
+        customer_id: userId,
+        provider_id: provider_id,
+        delivery_address: delivery_address,
+        total_price: total_price,
+        payment_method: payment_method || "CASH_ON_DELIVERY",
         status: "PLACED",
         items: {
           create: items.map((item: any) => ({
-            meal_id: item.meal_id,
+            meal_id: item.id || item.meal_id,
             quantity: item.quantity,
             price: item.price,
           })),
         },
       },
-      include: { items: true },
+      include: {
+        items: true,
+      },
     });
+
     return order;
   });
 };
@@ -32,21 +37,28 @@ const createOrder = async (userId: string, payload: any) => {
 const getAllOrders = async (query: any) => {
   const { page = 1, limit = 10 } = query;
   const skip = (Number(page) - 1) * Number(limit);
+  const take = Number(limit);
 
-  const result = await prisma.order.findMany({
-    skip,
-    take: Number(limit),
-    include: {
-      items: { include: { meal: true } },
-      customer: true,
-    },
-    orderBy: { created_at: "desc" },
-  });
-
-  const total = await prisma.order.count();
+  const [result, total] = await Promise.all([
+    prisma.order.findMany({
+      skip,
+      take,
+      include: {
+        items: { include: { meal: true } },
+        customer: true,
+      },
+      orderBy: { created_at: "desc" },
+    }),
+    prisma.order.count(),
+  ]);
 
   return {
-    meta: { page: Number(page), limit: Number(limit), total },
+    meta: {
+      page: Number(page),
+      limit: take,
+      total,
+      totalPage: Math.ceil(total / take),
+    },
     data: result,
   };
 };
@@ -68,15 +80,16 @@ const getDashboardStats = async () => {
 const getMyOrders = async (userId: string) => {
   return await prisma.order.findMany({
     where: { customer_id: userId },
-    include: { items: { include: { meal: true } } },
-    orderBy: { created_at: "desc" },
-  });
-};
-
-const updateOrderStatus = async (orderId: string, status: any) => {
-  return await prisma.order.update({
-    where: { id: orderId },
-    data: { status },
+    include: {
+      items: {
+        include: { meal: true },
+      },
+      provider: {
+        select: {
+          resturant_name: true,
+        },
+      },
+    },
   });
 };
 
@@ -110,12 +123,66 @@ const trackOrder = async (orderId: string) => {
   return result;
 };
 
+const cancelOrder = async (orderId: string, userId: string) => {
+  const order = await prisma.order.findUnique({
+    where: { id: orderId },
+  });
+
+  if (!order) {
+    throw new Error("Order not found");
+  }
+  if (order.customer_id !== userId) {
+    throw new Error("You are not authorized to cancel this order");
+  }
+  if (order.status !== "PLACED") {
+    throw new Error(`Cannot cancel order. Current status is ${order.status}`);
+  }
+  return await prisma.order.update({
+    where: { id: orderId },
+    data: { status: "CANCELLED" },
+  });
+};
+
+const getProviderOrders = async (providerId: string) => {
+  return await prisma.order.findMany({
+    where: {
+      provider_id: providerId,
+    },
+    include: {
+      customer: {
+        select: {
+          name: true,
+          email: true,
+        },
+      },
+      items: {
+        include: {
+          meal: true,
+        },
+      },
+    },
+  });
+};
+
+const updateOrderStatus = async (orderId: string, status: string) => {
+  return await prisma.order.update({
+    where: {
+      id: orderId,
+    },
+    data: {
+      status: status as any,
+    },
+  });
+};
+
 export const OrderService = {
   createOrder,
   getAllOrders,
   getMyOrders,
   getDashboardStats,
-  updateOrderStatus,
   deleteOrder,
   trackOrder,
+  cancelOrder,
+  getProviderOrders,
+  updateOrderStatus,
 };

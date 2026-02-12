@@ -3,8 +3,6 @@ import cors from "cors";
 import cookieParser from "cookie-parser";
 import { toNodeHandler } from "better-auth/node";
 
-// Routes Import
-import { UserRoutes } from "./modules/auth/auth.route";
 import { MealRoutes } from "./modules/meal/meal.route";
 import { ProviderRoutes } from "./modules/provider/provider.route";
 import { CategoryRoutes } from "./modules/category/category.route";
@@ -15,29 +13,29 @@ import { ReviewRoutes } from "./modules/review/review.route";
 import { auth } from "./lib/auth";
 import globalErrorHandler from "./middlewares/globalErrorHandler";
 import notFound from "./middlewares/notFound";
+import { AuthRoute } from "./modules/auth/auth.route";
 
 const app: Application = express();
 
-// Middlewares
 app.use(cookieParser());
 app.use(express.json());
 app.use(
   cors({
-    origin: ["http://localhost:3000", "http://localhost:5173"],
+    origin: ["http://localhost:3000"],
     credentials: true,
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization", "Cookie"],
+    exposedHeaders: ["set-cookie"],
   }),
 );
 
-// Better Auth Handler
 app.all("/api/auth/*splat", toNodeHandler(auth));
 
-// Basic Route
 app.get("/", (req, res) => {
   res.send("Food Hub Backend is running...");
 });
 
-// API Routes
-app.use("/api/v1/auth", UserRoutes);
+app.use("/api/v1/auth", AuthRoute);
 app.use("/api/v1/meals", MealRoutes);
 app.use("/api/v1/providers", ProviderRoutes);
 app.use("/api/v1/categories", CategoryRoutes);

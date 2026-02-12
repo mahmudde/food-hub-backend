@@ -14,7 +14,7 @@ const createProviderProfile = async (payload: any) => {
   return result;
 };
 
-const getMyProfile = async (userId: string) => {
+const getProviderProfile = async (userId: string) => {
   const result = await prisma.providerProfile.findUnique({
     where: {
       user_id: userId,
@@ -28,5 +28,5 @@ const getMyProfile = async (userId: string) => {
 
 export const ProviderService = {
   createProviderProfile,
-  getMyProfile,
+  getProviderProfile,
 };

@@ -2,58 +2,70 @@ import { Request, Response, NextFunction } from "express";
 import { UserRole } from "@prisma/client";
 import { prisma } from "../lib/prisma";
 
-const auth = (...roles: UserRole[]) => {
+const authMiddleware = (...roles: UserRole[]) => {
   return async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const rawCookie = req.headers.cookie;
+      const cookieHeader = req.headers.cookie || "";
 
-      if (!rawCookie) {
-        return res
-          .status(401)
-          .json({ success: false, message: "No cookies found" });
-      }
-
-      const rawToken = rawCookie
+      const rawToken = cookieHeader
         .split("; ")
-        .find((row: string) =>
-          row.trim().startsWith("better-auth.session_token="),
-        )
+        .find((row) => row.startsWith("better-auth.session_token="))
         ?.split("=")[1];
 
-      const token = decodeURIComponent(rawToken || "");
+      if (!rawToken) {
+        return res.status(401).json({
+          success: false,
+          message: "Unauthorized: No session token found",
+        });
+      }
 
-      const sessionWithUser = await prisma.session.findUnique({
-        where: { token: token },
-        include: { user: true },
+      const decodedToken = decodeURIComponent(rawToken);
+      const cleanToken = decodedToken.includes(".")
+        ? decodedToken.split(".")[0]
+        : decodedToken;
+
+      const sessionData = await prisma.session.findFirst({
+        where: {
+          token: cleanToken as string,
+        },
+        include: {
+          user: true,
+        },
       });
 
-      if (!sessionWithUser) {
-        return res
-          .status(401)
-          .json({ success: false, message: "Unauthorized" });
+      if (!sessionData || !sessionData.user) {
+        return res.status(401).json({
+          success: false,
+          message: "Unauthorized: Invalid session",
+        });
       }
 
-      if (
-        roles.length &&
-        !roles.includes(sessionWithUser.user.role as UserRole)
-      ) {
-        return res.status(403).json({ success: false, message: "Forbidden" });
+      if (new Date() > sessionData.expiresAt) {
+        return res.status(401).json({
+          success: false,
+          message: "Session expired",
+        });
       }
 
-      (req as any).user = {
-        id: sessionWithUser.user.id,
-        email: sessionWithUser.user.email,
-        role: sessionWithUser.user.role as UserRole,
-      };
+      const user = sessionData.user;
+      if (roles.length && !roles.includes(user.role as UserRole)) {
+        return res.status(403).json({
+          success: false,
+          message: "Forbidden: Access denied",
+        });
+      }
+
+      (req as any).user = user;
 
       next();
     } catch (err) {
-      console.error(err);
-      res
-        .status(500)
-        .json({ success: false, message: "Internal Server Error" });
+      console.error("Auth Middleware Error:", err);
+      res.status(500).json({
+        success: false,
+        message: "Internal Server Error",
+      });
     }
   };
 };
 
-export default auth;
+export default authMiddleware;
