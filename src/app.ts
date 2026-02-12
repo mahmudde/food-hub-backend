@@ -16,19 +16,31 @@ import notFound from "./middlewares/notFound";
 import { AuthRoute } from "./modules/auth/auth.route";
 
 const app: Application = express();
+const allowedOrigins = ["http://localhost:3000", /\.vercel\.app$/];
 
 app.use(cookieParser());
 app.use(express.json());
+
 app.use(
   cors({
-    origin: ["http://localhost:3000"],
+    origin: (origin, callback) => {
+      if (
+        !origin ||
+        allowedOrigins.some((allowed) =>
+          typeof allowed === "string"
+            ? allowed === origin
+            : allowed.test(origin),
+        )
+      ) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
     credentials: true,
-    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization", "Cookie"],
-    exposedHeaders: ["set-cookie"],
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
   }),
 );
-
 app.all("/api/auth/*splat", toNodeHandler(auth));
 
 app.get("/", (req, res) => {
