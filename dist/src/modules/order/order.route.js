@@ -1,0 +1,20 @@
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.OrderRoutes = void 0;
+const express_1 = __importDefault(require("express"));
+const order_controller_1 = require("./order.controller");
+const auth_1 = __importDefault(require("../../middlewares/auth"));
+const client_1 = require("@prisma/client");
+const router = express_1.default.Router();
+router.get("/dashboard-stats", (0, auth_1.default)(client_1.UserRole.ADMIN, client_1.UserRole.PROVIDER), order_controller_1.OrderController.getDashboardStats);
+router.get("/provider-orders", (0, auth_1.default)(client_1.UserRole.PROVIDER), order_controller_1.OrderController.getProviderOrders);
+router.patch("/status/:id", (0, auth_1.default)(client_1.UserRole.PROVIDER), order_controller_1.OrderController.updateStatus);
+router.get("/my-orders", (0, auth_1.default)(client_1.UserRole.CUSTOMER), order_controller_1.OrderController.getMyOrders);
+router.post("/", (0, auth_1.default)(client_1.UserRole.CUSTOMER), order_controller_1.OrderController.createOrder);
+router.patch("/cancel/:id", (0, auth_1.default)(client_1.UserRole.CUSTOMER), order_controller_1.OrderController.cancelOrder);
+router.get("/track/:id", (0, auth_1.default)(client_1.UserRole.CUSTOMER, client_1.UserRole.ADMIN, client_1.UserRole.PROVIDER), order_controller_1.OrderController.trackOrder);
+router.get("/all-orders", (0, auth_1.default)(client_1.UserRole.PROVIDER), order_controller_1.OrderController.getAllOrders);
+exports.OrderRoutes = router;
